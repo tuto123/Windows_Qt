@@ -1,8 +1,20 @@
 /*************************************************
-Copyright (C), 2020-2020, XK_605
-File name: FaceExtraction
-Author: tuto; Version: 1.0; Date: 2020-01-31;
-Description: 本项目的主要功能为识别出人脸并提取出来
+FileName: mainwindow.cpp
+Author: tuto; Version: 1.0; Date:2020-01-31;
+Description: 本项目使用的为haarcascade_frontalface_alt.xml的
+             分类级联器，使用步骤为1、人脸提取， 2、训练模型，
+             3、人脸识别
+Version: 1.0
+Function List: on_pushButton_clicked();    // 1、人脸提取
+               on_pushButton_2_clicked();    // 2、训练模型
+               on_pushButton_3_clicked();    // 3、人脸识别
+               takefacesShowHelpText();
+               nameimport();
+               face_image_save(QString dir_name, QString cascade_path);
+History:
+  1、Date：
+     Author:
+     Modification:
 *************************************************/
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
@@ -19,7 +31,6 @@ Description: 本项目的主要功能为识别出人脸并提取出来
 #include "opencv2/highgui.hpp"
 #include "opencv2/objdetect.hpp"
 #include "opencv2/face.hpp"
-
 
 using namespace std;
 using namespace cv;
@@ -54,6 +65,18 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+/*************************************************
+Function: takefacesShowHelpText()
+Description: 第一个步骤提取人脸的使用帮助说明窗口
+Calls:
+Called by:
+Tablle Accessed:
+Table Updated:
+Input:
+Output:
+Return:
+Others:
+*************************************************/
 void MainWindow::takefacesShowHelpText()
 {
 
@@ -72,23 +95,18 @@ void MainWindow::takefacesShowHelpText()
 
 }
 
-void MainWindow::nameimport()
-{
-    if(nameedit->text().isEmpty())
-    {
-        QMessageBox::information(NULL,"提示窗口","请输入姓名！");
-    }
-    else
-    {
-        name = nameedit->text();
-        namedlg -> close();
-        label_number++;
-        QString dir_name = face_image_path + name + "\\";
-        ret = face_image_save(dir_name, cascade_xml_path);
-    }
-}
-
-
+/*************************************************
+Function: write_cvs(QString& filename, QString line, int label_number, char separator = ';')
+Description: 将图片信息存储到对应的文件路径中
+Calls:
+Called by: face_image_save(QString dir_name, QString cascade_path)
+Tablle Accessed:
+Table Updated:
+Input: QString& filename, QString line, int label_number, char separator = ';'
+Output:
+Return:
+Others:
+*************************************************/
 void write_cvs(QString& filename, QString line, int label_number, char separator = ';')
 {
     ofstream cvs_file;
@@ -105,33 +123,45 @@ void write_cvs(QString& filename, QString line, int label_number, char separator
     }
 }
 
-int  face_image_save(QString dir_name, QString cascade_path)
+/*************************************************
+Function: face_image_save(QString dir_name, QString cascade_path)
+Description: 将对提取的人脸图片及图片信息存储到指定的路径中
+Calls: face_image_save(QString dir_name, QString cascade_path)
+       write_cvs(QString& filename, QString line, int label_number, char separator = ';')
+Called by: nameimport()
+Tablle Accessed:
+Table Updated:
+Input:
+Output:
+Return: ret
+Others:
+*************************************************/
+int face_image_save(QString dir_name, QString cascade_path)
 {
     QDir dir(dir_name);
-    //printf("我们将保存你的图片到以下路径：%s\n", dir_name.c_str());
+
+    //判断文件夹是否存在，否则创建
     if (!dir.exists())
     {
-        //printf("不存在文件夹，我们将创建...\n");
         dir.mkdir(dir_name);
     }
     else
     {
-        qDebug()<<"人脸图片已经保存在数据库，不需要重复读取\n";
+        qDebug()<<"人脸图片已经保存在数据库，不需要重复读取\n";    //已录入将不重复录入
         return -1;
     }
-
 
     VideoCapture capture;
 
-    //打开笔记本摄像头
+    // 打开笔记本摄像头
     capture.open(0);
     if (!capture.isOpened())
     {
-        printf("can't open camera...\n");
+        qDebug("can't open camera...\n");
         return -1;
     }
 
-    //加载分类器
+    // 加载分类器
     String strcascade_path = cascade_path.toStdString();
     CascadeClassifier cascade;
     cascade.load(strcascade_path);
@@ -157,11 +187,11 @@ int  face_image_save(QString dir_name, QString cascade_path)
         {
             for (int i = 0; i < faces.size(); ++i)
             {
-                faceROI = img_gray(faces[i]);//ROI部分为将要保存的图片，用img_gray获取灰度图部分，保存成灰度图；如果将img_gray改为img，就变成彩色图片了
-                resize(faceROI, faceROI, MY_SIZE);	//调整ROI图片大小到指定大小
+                faceROI = img_gray(faces[i]);    // ROI部分为将要保存的图片，用img_gray获取灰度图部分，保存成灰度图；如果将img_gray改为img，就变成彩色图片了
+                resize(faceROI, faceROI, MY_SIZE);    // 调整ROI图片大小到指定大小
                 rectangle(img, faces[i], Scalar(0, 255, 0), 2, 8, 0);
-                imshow("view", img);	//显示视频图像
-                imshow("ROI", faceROI);	//显示ROI区域
+                imshow("view", img);	// 显示视频图像
+                imshow("ROI", faceROI);	// 显示ROI区域
 
                 tmp_path = format("%d.jpg", count++);
                 String strdir_name = dir_name.toStdString();
@@ -181,20 +211,61 @@ int  face_image_save(QString dir_name, QString cascade_path)
         }
     }
 
-
     capture.release();
     destroyAllWindows();
 
     return 0;
 }
 
+/*************************************************
+Function: nameimport()
+Description: 将改人脸姓名输入框后将创建对应的文件并将人脸
+             图像存储至该文件夹中
+Calls: face_image_save(QString dir_name, QString cascade_path)
+Called by: on_pushButton_clicked();
+Tablle Accessed:
+Table Updated:
+Input:
+Output:
+Return:
+Others:
+*************************************************/
+void MainWindow::nameimport()
+{
+    if(nameedit->text().isEmpty())
+    {
+        QMessageBox::information(NULL,"提示窗口","请输入姓名！");
+    }
+    else
+    {
+        name = nameedit->text();
+        namedlg -> close();
+        label_number++;
+        QString dir_name = face_image_path + name + "\\";    // 添加在face_image_path目录下的子文件夹
+        ret = face_image_save(dir_name, cascade_xml_path);
+    }
+}
 
+/*************************************************
+Function: on_pushButton_clicked()
+Description: 人脸提取按钮
+Calls: nameimport()
+Called by:
+Tablle Accessed:
+Table Updated:
+Input:
+Output:
+Return:
+Others:
+*************************************************/
 void MainWindow::on_pushButton_clicked()
 {
+    // 创建新窗口
     namedlg = new QDialog(this);
     nameedit = new QLineEdit(namedlg);
     okbutton = new QPushButton(namedlg);
 
+    // 创建新编辑框及姓名确认按钮
     nameedit -> setGeometry(50,80,150,30);
     okbutton -> setGeometry(200,180,60,30);
     okbutton -> setText("确认");
@@ -203,11 +274,23 @@ void MainWindow::on_pushButton_clicked()
     namedlg -> setFixedSize(300,250);
     namedlg -> show();
 
-    connect(okbutton, SIGNAL(clicked()), this, SLOT(nameimport()));
+    connect(okbutton, SIGNAL(clicked()), this, SLOT(nameimport()));    // okbutton连接nameimport槽函数
 
 
 }
 
+/*************************************************
+Function: read_cvs(const string& filename, vector<Mat>& img, vector<int>& lable, char separator = ';')
+Description: 读取已抓取好的人脸库
+Calls:
+Called by: face_model_train_save(string cvs_path)
+Tablle Accessed:
+Table Updated:
+Input:
+Output:
+Return:
+Others:
+*************************************************/
 void read_cvs(const string& filename, vector<Mat>& img, vector<int>& lable, char separator = ';')
 {
     Mat tmp_img;
@@ -230,6 +313,18 @@ void read_cvs(const string& filename, vector<Mat>& img, vector<int>& lable, char
     tmp_img.release();
 }
 
+/*************************************************
+Function: face_model_train_save(string cvs_path)
+Description: 人脸模型训练,读取人脸库
+Calls: read_cvs(const string& filename, vector<Mat>& img, vector<int>& lable, char separator = ';')；
+Called by: on_pushButton_2_clicked()
+Tablle Accessed:
+Table Updated:
+Input:
+Output:
+Return:
+Others:
+*************************************************/
 int face_model_train_save(string cvs_path)
 {
     printf("创建人脸识别的模型并进行训练，保存训练结果中（需要一些时间）...\n");
@@ -258,8 +353,6 @@ int face_model_train_save(string cvs_path)
     double end3;
     String strname = name.toStdString();
 
-
-
     //LBP局部二值模式直方图
     start3 = (double)getTickCount();
     Ptr<LBPHFaceRecognizer> lbph_model = LBPHFaceRecognizer::create();
@@ -277,7 +370,18 @@ int face_model_train_save(string cvs_path)
     return 0;
 }
 
-
+/*************************************************
+Function: on_pushButton_2_clicked()
+Description: 训练模型按钮
+Calls: face_model_train_save(string cvs_path)
+Called by:
+Tablle Accessed:
+Table Updated:
+Input:
+Output:
+Return:
+Others:
+*************************************************/
 void MainWindow::on_pushButton_2_clicked()
 {
     String strcvs_path = name_cvs_path.toStdString();
@@ -292,6 +396,19 @@ void MainWindow::on_pushButton_2_clicked()
     }
 }
 
+/*************************************************
+Function: face_recg(Mat image, String cascade_path)
+Description: 人脸识别，对摄像头抓取的人脸和已训练好的模型
+             进行比对，如果置信值小于限定则识别成功
+Calls:
+Called by: on_pushButton_3_clicked()
+Tablle Accessed:
+Table Updated:
+Input:
+Output:
+Return:
+Others:
+*************************************************/
 int face_recg(Mat image, String cascade_path)
 {
     printf("人脸识别中...\n");
@@ -348,6 +465,18 @@ int face_recg(Mat image, String cascade_path)
     return 0;
 }
 
+/*************************************************
+Function: on_pushButton_3_clicked()
+Description: 人脸识别按钮
+Calls: face_recg(Mat image, String cascade_path)
+Called by:
+Tablle Accessed:
+Table Updated:
+Input:
+Output:
+Return:
+Others:
+*************************************************/
 void MainWindow::on_pushButton_3_clicked()
 {
     Mat frame;
@@ -363,27 +492,27 @@ void MainWindow::on_pushButton_3_clicked()
     qDebug()<<QString::fromStdString(faces_models_path.toStdString());
     end3 = (getTickCount() - start3) / getTickFrequency();
     qDebug("加载LBP算法训练模型所用时间：	%f s\n", end3);
-    if (capture.isOpened())
-       {
-    while(1)
+    if(capture.isOpened())
     {
-        namedWindow("origin");
-        namedWindow("result");
-        capture >> frame;
+        while(1)
+        {
+            namedWindow("origin");
+            namedWindow("result");
+            capture >> frame;
 
-              //人脸识别
-             String strcascade_xml_path = cascade_xml_path.toStdString();
-             face_recg(frame, strcascade_xml_path);
-             char c = waitKey(10);
-             if(c==27)
-             {
-                 break;
-             }
+            //人脸识别
+            String strcascade_xml_path = cascade_xml_path.toStdString();
+            face_recg(frame, strcascade_xml_path);
+            char c = waitKey(10);
+            if(c==27)
+            {
+                break;
+            }
+        }
     }
-    }
-    else{
+    else
+    {
         qDebug()<<"can't open cam!";
     }
-
 
 }
