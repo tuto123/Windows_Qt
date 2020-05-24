@@ -1,0 +1,19 @@
+<RCC>
+    <qresource prefix="/image">
+        <file>images/secondbackground.png</file>
+        <file>images/adminbackground.jpg</file>
+        <file>images/background.jpg</file>
+        <file>images/userbackground.jpg</file>
+        <file>images/userbackground1.jpg</file>
+    </qresource>
+    <qresource prefix="/style">
+        <file>qss/black.css</file>
+        <file>qss/blue.css</file>
+        <file>qss/brown.css</file>
+        <file>qss/darkgray.css</file>
+        <file>qss/dev.css</file>
+        <file>qss/gray.css</file>
+        <file>qss/lightgray.css</file>
+        <file>qss/silvery.css</file>
+    </qresource>
+</RCC>
