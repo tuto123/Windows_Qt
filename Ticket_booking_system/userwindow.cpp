@@ -49,6 +49,8 @@ void UserWindow::initUserwindow()
     QDate local(QDate::currentDate());
     ui->flight_date_dateEdit->setDate(local);               //设置日历为当前日期
 
+    ui->flight_que_tableWidget->horizontalHeader()->setStretchLastSection(true);
+    ui->order_cen_tableWidget->horizontalHeader()->setStretchLastSection(true);
     ui->flight_que_tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     ui->order_cen_tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 
@@ -120,11 +122,21 @@ void UserWindow::initUser_info()
 //清理flight_que_table
 void UserWindow::clear_flight_que_table()
 {
-    ui->flight_que_tableWidget->horizontalHeader()->setStretchLastSection(true);                    //使行列头自适应宽度，最后一列将会填充空白部分
-    ui->flight_que_tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);     //使行列头自适应宽度，所有列平均分来填充空白部分
-
     ui->flight_que_tableWidget->clearContents();
     ui->flight_que_tableWidget->setRowCount(0);
+
+    //ui->flight_que_tableWidget->horizontalHeader()->setStretchLastSection(true);                    //使行列头自适应宽度，最后一列将会填充空白部分
+    //ui->flight_que_tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);     //使行列头自适应宽度，所有列平均分来填充空白部分
+}
+
+//清理order_cen_table
+void UserWindow::clear_order_cen_table()
+{
+    ui->order_cen_tableWidget->clearContents();
+    ui->order_cen_tableWidget->setRowCount(0);
+
+    //ui->order_cen_tableWidget->horizontalHeader()->setStretchLastSection(true);                    //使行列头自适应宽度，最后一列将会填充空白部分
+    //ui->order_cen_tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);     //使行列头自适应宽度，所有列平均分来填充空白部分
 }
 
 //菜单_个人中心
@@ -138,6 +150,7 @@ void UserWindow::on_menu_order_cen_pushButton_clicked()
 {
     order_cen_show();
     ui->stackedWidget->setCurrentWidget(ui->order_cen_page);
+
 }
 
 //菜单_航班查询
@@ -579,7 +592,8 @@ void UserWindow::on_ticket_book_pushButton_clicked()
        QSqlQuery query;
        if(query.exec(str))
        {
-           QMessageBox::about(NULL, "提示", "下单成功,可到订单中心查看订单!");
+           QMessageBox::about(NULL, "提示", QString("订单%1下单成功,可到订单中心查看订单!").arg(user_tel + localdate + ordertime));
+           ui->flight_que_tableWidget->item(i, 0)->setCheckState(Qt::Unchecked);
        }
        else
        {
@@ -1089,8 +1103,12 @@ void UserWindow::on_ch_des_city_comboBox_activated(const QString &arg1)
 //订单中心显示
 void UserWindow::order_cen_show()
 {
-    ui->order_cen_tableWidget->horizontalHeader()->setStretchLastSection(true);                    //使行列头自适应宽度，最后一列将会填充空白部分
-    ui->order_cen_tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);     //使行列头自适应宽度，所有列平均分来填充空白部分
+
+    clear_order_cen_table();
+
+    //ui->order_cen_tableWidget->horizontalHeader()->setStretchLastSection(true);                    //使行列头自适应宽度，最后一列将会填充空白部分
+    //ui->order_cen_tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);     //使行列头自适应宽度，所有列平均分来填充空白部分
+
     ui->order_cen_tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
     ui->order_cen_tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);             //设置每行内容不可编辑
     ui->order_cen_tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);            //设置选择行为，以行为单位
@@ -1142,20 +1160,147 @@ void UserWindow::order_cen_show()
     {
         QMessageBox::about(NULL, "提示", "为查询到您的相关订单!");
         ui->stackedWidget->setCurrentWidget(ui->flight_que_page);
-
     }
 }
 
 //订单支付
 void UserWindow::on_order_pay_pushButton_clicked()
 {
+    QList<int> pay_list;
 
+    for(int i = 0; i < ui->order_cen_tableWidget->rowCount(); i++)
+    {
+        if(ui->order_cen_tableWidget->item(i, 0)->checkState())
+        {
+           pay_list << i;
+        }
+    }
+
+    if(pay_list.isEmpty())
+    {
+        QMessageBox::about(NULL, "提示", "请选择需要支付的订单!");
+    }
+    else
+    {
+        QMessageBox::StandardButton reply = QMessageBox::question(this, "提示", "确认支付该订单吗?", QMessageBox::Yes | QMessageBox::No);
+
+        if (reply == QMessageBox::Yes)
+        {
+            for(int i = 0; i < pay_list.length(); i++)
+            {
+                b_order_pay = QString("已支付").toUtf8();
+                order_pay = b_order_pay.data();
+                b_order_num = ui->order_cen_tableWidget->item(pay_list.at(i), 1)->text().toUtf8();
+                order_num = b_order_num.data();
+
+                QSqlTableModel order_info_model;
+                order_info_model.setTable("order_info");
+                order_info_model.setFilter(tr("order_num = '%1'").arg(ui->order_cen_tableWidget->item(pay_list.at(i), 1)->text()));
+                order_info_model.select();
+                int rowcount = order_info_model.rowCount();
+                if( rowcount == 1)
+                {
+                    QString pay_state = order_info_model.data(order_info_model.index(0, 4)).toString();             //检查该订单号是否已支付
+                    if(pay_state == "未支付")
+                    {
+                        QString pay_str = QString("update order_info set order_pay_state='%1' where order_num='%2'").arg(order_pay).arg(order_num);
+                        QSqlQuery query;
+                        if(query.exec(pay_str))
+                        {
+                            QMessageBox::about(NULL, "提示", QString("您的订单%1支付成功!").arg(ui->order_cen_tableWidget->item(pay_list.at(i), 1)->text()));
+                            order_cen_show();
+                        }
+                        else
+                        {
+                            QMessageBox::about(NULL, "提示", "支付失败!");
+                            order_cen_show();
+                        }
+                    }
+                    else
+                    {
+                        QMessageBox::about(NULL, "提示", QString("您的订单号%1已支付!").arg(ui->order_cen_tableWidget->item(pay_list.at(i), 1)->text()));
+                        order_cen_show();
+                    }
+
+                }
+            }
+        }
+        if (reply == QMessageBox::No)
+        {
+            QMessageBox::about(NULL, "提示", "您已取消订单支付!");
+            order_cen_show();
+        }
+    }
 }
 
 //订单退单
 void UserWindow::on_order_back_pushButton_clicked()
 {
+    QList<int> orderback_list;
 
+    for(int i = 0; i < ui->order_cen_tableWidget->rowCount(); i++)
+    {
+        if(ui->order_cen_tableWidget->item(i, 0)->checkState())
+        {
+           orderback_list << i;
+        }
+    }
+
+    if(orderback_list.isEmpty())
+    {
+        QMessageBox::about(NULL, "提示", "请选择需要退订的订单!");
+    }
+    else
+    {
+        QMessageBox::StandardButton reply = QMessageBox::question(this, "提示", "确认退订该订单?", QMessageBox::Yes | QMessageBox::No);
+
+        if (reply == QMessageBox::Yes)
+        {
+            for(int i = 0; i < orderback_list.length(); i++)
+            {
+                b_orderback_pay = QString("未支付").toUtf8();
+                orderback_pay = b_orderback_pay.data();
+                b_order_num = ui->order_cen_tableWidget->item(orderback_list.at(i), 1)->text().toUtf8();
+                order_num = b_order_num.data();
+
+                QSqlTableModel order_info_model;
+                order_info_model.setTable("order_info");
+                order_info_model.setFilter(tr("order_num = '%1'").arg(ui->order_cen_tableWidget->item(orderback_list.at(i), 1)->text()));
+                order_info_model.select();
+                int rowcount = order_info_model.rowCount();
+                if( rowcount == 1)
+                {
+                    QString pay_state = order_info_model.data(order_info_model.index(0, 4)).toString();             //检查该订单号是否已支付
+                    if(pay_state == "已支付")
+                    {
+                        QString payback_str = QString("update order_info set order_pay_state='%1' where order_num='%2'").arg(orderback_pay).arg(order_num);
+                        QSqlQuery query;
+                        if(query.exec(payback_str))
+                        {
+                            QMessageBox::about(NULL, "提示", QString("您的订单%1退订成功!").arg(ui->order_cen_tableWidget->item(orderback_list.at(i), 1)->text()));
+                            order_cen_show();
+                        }
+                        else
+                        {
+                            QMessageBox::about(NULL, "提示", "订单退订失败!");
+                            order_cen_show();
+                        }
+                    }
+                    else
+                    {
+                        QMessageBox::about(NULL, "提示", QString("您的订单号%1未支付!").arg(ui->order_cen_tableWidget->item(orderback_list.at(i), 1)->text()));
+                        order_cen_show();
+                    }
+
+                }
+            }
+        }
+        if (reply == QMessageBox::No)
+        {
+            QMessageBox::about(NULL, "提示", "您已取消退订订单!");
+            order_cen_show();
+        }
+    }
 }
 /*******************************************************************************************订单中心功能******************************************************************************/
 

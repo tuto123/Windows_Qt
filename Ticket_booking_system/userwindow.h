@@ -57,6 +57,12 @@ private:
     QByteArray b_order_time;
     QByteArray b_order_pay_time;
 
+    QByteArray b_order_pay;                 //确认支付成功
+    char *order_pay;                       //确认支付成功
+    QByteArray b_orderback_pay;                //确认退订订单
+    char *orderback_pay;                       //确认退订订单
+
+
 
     char *f_order_num;
     char *f_order_flight_num;
@@ -82,6 +88,8 @@ private slots:
      void order_cen_show();                 //显示订单中心的订单信息
 
      void clear_flight_que_table();         //清除flight_que_table
+
+     void clear_order_cen_table();          //清除order_cen_table
 
      void paintEvent(QPaintEvent *event);   //添加可调节背景图功能函数
 
@@ -114,8 +122,11 @@ private slots:
      void on_ch_des_city_comboBox_activated(const QString &arg1);
 
      void on_ticket_book_pushButton_clicked();
+
      void on_order_pay_pushButton_clicked();
+
      void on_order_back_pushButton_clicked();
+
 };
 
 #endif // USERWINDOW_H

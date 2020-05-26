@@ -29,3 +29,5 @@ FORMS    += mainwindow.ui \
 
 RESOURCES += \
     material.qrc
+
+DISTFILES +=

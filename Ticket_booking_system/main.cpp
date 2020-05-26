@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include <QApplication>
 #include <QMessageBox>
+#include <QTranslator>
 
 #include "database.h"
 #include <QTextCodec>
