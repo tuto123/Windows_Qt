@@ -41,7 +41,9 @@ void UserWindow::paintEvent(QPaintEvent *event)
 //初始化用户界面
 void UserWindow::initUserwindow()
 {
-    order_cen_show();                                       //显示订单中心订单相关信息
+    //order_cen_show();                                       //显示订单中心订单相关信息
+
+    //my_home_show();                                         //显示个人中心机票相关信息
 
     ui->one_way_radioButton->setChecked(true);              //初始化为单程城市航班查询
 
@@ -51,8 +53,10 @@ void UserWindow::initUserwindow()
 
     ui->flight_que_tableWidget->horizontalHeader()->setStretchLastSection(true);
     ui->order_cen_tableWidget->horizontalHeader()->setStretchLastSection(true);
+    ui->my_home_tableWidget->horizontalHeader()->setStretchLastSection(true);
     ui->flight_que_tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     ui->order_cen_tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    ui->my_home_tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 
     ui->flight_num_lineEdit->setReadOnly(true);             //设置flight_num_edit不可编辑
     ui->flight_date_dateEdit->setReadOnly(true);            //设置dateedit不可编辑
@@ -139,9 +143,21 @@ void UserWindow::clear_order_cen_table()
     //ui->order_cen_tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);     //使行列头自适应宽度，所有列平均分来填充空白部分
 }
 
+//清理_my_home_table
+void UserWindow::clear_my_home_table()
+{
+    ui->my_home_tableWidget->clearContents();
+    ui->my_home_tableWidget->setRowCount(0);
+
+    //ui->order_cen_tableWidget->horizontalHeader()->setStretchLastSection(true);                    //使行列头自适应宽度，最后一列将会填充空白部分
+    //ui->order_cen_tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);     //使行列头自适应宽度，所有列平均分来填充空白部分
+}
+
+
 //菜单_个人中心
 void UserWindow::on_menu_my_home_pushButton_clicked()
 {
+    my_home_show();
     ui->stackedWidget->setCurrentWidget(ui->my_home_page);
 }
 
@@ -162,10 +178,19 @@ void UserWindow::on_menu_flight_que_pushButton_clicked()
 //退出登录功能
 void UserWindow::on_logout_pushButton_clicked()
 {
-    this->close();
-    MainWindow *mw = new MainWindow();
-    mw->setWindowTitle("航空机票预订系统");
-    mw->show();
+    QMessageBox::StandardButton reply = QMessageBox::question(this, "提示", "确认退出系统吗?", QMessageBox::Yes | QMessageBox::No);
+    if(reply == QMessageBox::Yes)
+    {
+        this->close();
+        MainWindow *mw = new MainWindow();
+        mw->setWindowTitle("航空机票预订系统");
+        mw->show();
+    }
+    else
+    {
+
+    }
+
 }
 /****************************************************************************************航班查询及下单功能****************************************************************************/
 //单程城市查询_radioButton
@@ -553,6 +578,10 @@ void UserWindow::on_ticket_book_pushButton_clicked()
            order_list << i;
         }
     }
+    if(order_list.isEmpty())
+    {
+        QMessageBox::about(NULL, "提示", "请选择要订票的航班!");
+    }
     for(int i = 0; i < order_list.length(); i++)
     {
        QDateTime local(QDateTime::currentDateTime());
@@ -584,7 +613,7 @@ void UserWindow::on_ticket_book_pushButton_clicked()
        f_order_time = b_order_time.data();
        f_order_num = b_order_num.data();
 
-       QString str = QString("insert into order_info(order_num, order_flight_num, order_u_tel, order_u_name, order_pay_state, order_flight_date, order_flight_time, order_flight_to_city, order_flight_ar_city, order_flight_price, order_time)     \
+       QString str = QString("insert into order_info(order_num, order_flight_num, order_u_tel, order_u_name, order_pay_state, order_flight_date, order_flight_time, order_flight_to_city, order_flight_ar_city, order_flight_price, order_time)   \
                              values('%1', '%2', '%3', '%4', '%5', '%6', '%7', '%8', '%9', '%10', '%11')")                                                                  \
                              .arg(f_order_num).arg(f_order_flight_num).arg(f_order_u_tel).arg(f_order_name).arg(f_order_pay_state)
                              .arg(f_order_flight_date).arg(f_order_flight_time).arg(f_order_flight_to_city)
@@ -1158,8 +1187,7 @@ void UserWindow::order_cen_show()
     }
     else
     {
-        QMessageBox::about(NULL, "提示", "为查询到您的相关订单!");
-        ui->stackedWidget->setCurrentWidget(ui->flight_que_page);
+        QMessageBox::about(NULL, "提示", "未查询到您的相关订单!");
     }
 }
 
@@ -1188,8 +1216,6 @@ void UserWindow::on_order_pay_pushButton_clicked()
         {
             for(int i = 0; i < pay_list.length(); i++)
             {
-                b_order_pay = QString("已支付").toUtf8();
-                order_pay = b_order_pay.data();
                 b_order_num = ui->order_cen_tableWidget->item(pay_list.at(i), 1)->text().toUtf8();
                 order_num = b_order_num.data();
 
@@ -1203,9 +1229,45 @@ void UserWindow::on_order_pay_pushButton_clicked()
                     QString pay_state = order_info_model.data(order_info_model.index(0, 4)).toString();             //检查该订单号是否已支付
                     if(pay_state == "未支付")
                     {
-                        QString pay_str = QString("update order_info set order_pay_state='%1' where order_num='%2'").arg(order_pay).arg(order_num);
-                        QSqlQuery query;
-                        if(query.exec(pay_str))
+                        QDateTime local(QDateTime::currentDateTime());
+                        order_pay_time = local.toString("hh:mm:ss");
+
+                        QString localdate = local.toString("yyyyMMdd");
+                        QString eletime = local.toString("hhmmss");
+
+                        b_order_pay = QString("已支付").toUtf8();
+                        order_pay = b_order_pay.data();
+
+                        b_e_ticket_num = (ui->order_cen_tableWidget->item(pay_list.at(i),2)->text() + localdate + eletime).toUtf8();
+                        b_e_order_num = ui->order_cen_tableWidget->item(pay_list.at(i),1)->text().toUtf8();
+                        b_e_ticket_u_name = ui->order_cen_tableWidget->item(pay_list.at(i),4)->text().toUtf8();
+                        b_e_flight_num = ui->order_cen_tableWidget->item(pay_list.at(i),2)->text().toUtf8();
+                        b_e_flight_to_city = ui->order_cen_tableWidget->item(pay_list.at(i),8)->text().toUtf8();
+                        b_e_flight_ar_city = ui->order_cen_tableWidget->item(pay_list.at(i),9)->text().toUtf8();
+                        b_e_flight_date = ui->order_cen_tableWidget->item(pay_list.at(i),6)->text().toUtf8();
+                        b_e_flight_time = ui->order_cen_tableWidget->item(pay_list.at(i),7)->text().toUtf8();
+                        b_e_flight_price = ui->order_cen_tableWidget->item(pay_list.at(i),10)->text().toUtf8();
+                        b_order_pay_time = order_pay_time.toUtf8();
+
+                        e_ticket_num = b_e_ticket_num.data();
+                        e_order_num = b_e_order_num.data();
+                        e_ticket_u_name = b_e_ticket_u_name.data();
+                        e_flight_num = b_e_flight_num.data();
+                        e_flight_to_city = b_e_flight_to_city.data();
+                        e_flight_ar_city = b_e_flight_ar_city.data();
+                        e_flight_date = b_e_flight_date.data();
+                        e_flight_time = b_e_flight_time.data();
+                        e_flight_price = b_e_flight_price.data();
+                        order_pay_time = b_order_pay_time.data();
+
+                        QString pay_str = QString("update order_info set order_pay_state='%1', order_pay_time='%2' where order_num='%3'").arg(order_pay).arg(order_pay_time).arg(order_num);
+                        QString ele_str = QString("insert into ele_ticket(e_ticket_num, e_order_num, e_ticket_u_name, e_flight_num, e_filght_to_city, e_flight_ar_city, e_flight_date, e_flight_to_time, e_flight_price)   \
+                                                    values('%1', '%2', '%3', '%4', '%5', '%6', '%7', '%8', '%9')")
+                                                  .arg(e_ticket_num).arg(e_order_num).arg(e_ticket_u_name).arg(e_flight_num).arg(e_flight_to_city)
+                                                  .arg(e_flight_ar_city).arg(e_flight_date).arg(e_flight_time).arg(e_flight_price);
+                        QSqlQuery pay_query;
+                        QSqlQuery ele_query;
+                        if(pay_query.exec(pay_str) && ele_query.exec(ele_str))
                         {
                             QMessageBox::about(NULL, "提示", QString("您的订单%1支付成功!").arg(ui->order_cen_tableWidget->item(pay_list.at(i), 1)->text()));
                             order_cen_show();
@@ -1258,11 +1320,6 @@ void UserWindow::on_order_back_pushButton_clicked()
         {
             for(int i = 0; i < orderback_list.length(); i++)
             {
-                b_orderback_pay = QString("未支付").toUtf8();
-                orderback_pay = b_orderback_pay.data();
-                b_order_num = ui->order_cen_tableWidget->item(orderback_list.at(i), 1)->text().toUtf8();
-                order_num = b_order_num.data();
-
                 QSqlTableModel order_info_model;
                 order_info_model.setTable("order_info");
                 order_info_model.setFilter(tr("order_num = '%1'").arg(ui->order_cen_tableWidget->item(orderback_list.at(i), 1)->text()));
@@ -1273,9 +1330,19 @@ void UserWindow::on_order_back_pushButton_clicked()
                     QString pay_state = order_info_model.data(order_info_model.index(0, 4)).toString();             //检查该订单号是否已支付
                     if(pay_state == "已支付")
                     {
-                        QString payback_str = QString("update order_info set order_pay_state='%1' where order_num='%2'").arg(orderback_pay).arg(order_num);
-                        QSqlQuery query;
-                        if(query.exec(payback_str))
+                        b_orderback_pay = QString("未支付").toUtf8();
+                        b_orderback_time = QString("").toUtf8();
+                        orderback_pay = b_orderback_pay.data();
+                        orderback_time = b_orderback_time.data();
+                        b_order_num = ui->order_cen_tableWidget->item(orderback_list.at(i), 1)->text().toUtf8();
+                        order_num = b_order_num.data();
+
+                        QString payback_str = QString("update order_info set order_pay_state='%1', order_pay_time='%2' where order_num='%3'").arg(orderback_pay).arg(orderback_time).arg(order_num);
+                        QString eleback_str = QString("delete from ele_ticket where e_order_num='%1'").arg(order_num);
+
+                        QSqlQuery payback_query;
+                        QSqlQuery eleback_query;
+                        if(payback_query.exec(payback_str) && eleback_query.exec(eleback_str))
                         {
                             QMessageBox::about(NULL, "提示", QString("您的订单%1退订成功!").arg(ui->order_cen_tableWidget->item(orderback_list.at(i), 1)->text()));
                             order_cen_show();
@@ -1302,8 +1369,125 @@ void UserWindow::on_order_back_pushButton_clicked()
         }
     }
 }
+
+//订单删除功能
+void UserWindow::on_order_del_pushButton_clicked()
+{
+    QList<int> orderback_list;
+
+    for(int i = 0; i < ui->order_cen_tableWidget->rowCount(); i++)
+    {
+        if(ui->order_cen_tableWidget->item(i, 0)->checkState())
+        {
+           orderback_list << i;
+        }
+    }
+
+    if(orderback_list.isEmpty())
+    {
+        QMessageBox::about(NULL, "提示", "请选择需要退订的订单!");
+    }
+    else
+    {
+        QMessageBox::StandardButton reply = QMessageBox::question(this, "提示", "确认删除该订单?", QMessageBox::Yes | QMessageBox::No);
+
+        if (reply == QMessageBox::Yes)
+        {
+            for(int i = 0; i < orderback_list.length(); i++)
+            {
+                QSqlTableModel order_info_model;
+                order_info_model.setTable("order_info");
+                order_info_model.setFilter(tr("order_num = '%1'").arg(ui->order_cen_tableWidget->item(orderback_list.at(i), 1)->text()));
+                order_info_model.select();
+                int rowcount = order_info_model.rowCount();
+                if( rowcount == 1)
+                {
+                    QString pay_state = order_info_model.data(order_info_model.index(0, 4)).toString();             //检查该订单号是否已支付
+                    if(pay_state == "未支付")
+                    {
+                        b_order_num = ui->order_cen_tableWidget->item(orderback_list.at(i), 1)->text().toUtf8();
+                        order_num = b_order_num.data();
+
+                        QString str = QString("delete from order_info where order_num='%1'").arg(order_num);
+                        QSqlQuery query;
+
+                        if(query.exec(str))
+                        {
+                            QMessageBox::about(NULL, "提示", QString("您的订单%1删除成功!").arg(ui->order_cen_tableWidget->item(orderback_list.at(i), 1)->text()));
+                            order_cen_show();
+                        }
+                        else
+                        {
+                            QMessageBox::about(NULL, "提示", "订单删除失败!");
+                            order_cen_show();
+                        }
+                    }
+                    else
+                    {
+                        QMessageBox::about(NULL, "提示", QString("您的订单号%1已支付,无法删除,请先退订订单!").arg(ui->order_cen_tableWidget->item(orderback_list.at(i), 1)->text()));
+                        order_cen_show();
+                    }
+
+                }
+            }
+        }
+        if (reply == QMessageBox::No)
+        {
+            QMessageBox::about(NULL, "提示", "您已取消删除订单!");
+            order_cen_show();
+        }
+    }
+}
 /*******************************************************************************************订单中心功能******************************************************************************/
 
+/*******************************************************************************************个人中心功能******************************************************************************/
+void UserWindow::my_home_show()
+{
+    clear_my_home_table();
 
+    //ui->order_cen_tableWidget->horizontalHeader()->setStretchLastSection(true);                    //使行列头自适应宽度，最后一列将会填充空白部分
+    //ui->order_cen_tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);     //使行列头自适应宽度，所有列平均分来填充空白部分
 
+    ui->my_home_tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
+    ui->my_home_tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);             //设置每行内容不可编辑
+    ui->my_home_tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);            //设置选择行为，以行为单位
+
+    QSqlTableModel my_home_model;
+    my_home_model.setTable("ele_ticket");
+    my_home_model.setFilter(tr("e_ticket_u_name = '%1'").arg(user_name));
+    my_home_model.select();
+    int rowcount = my_home_model.rowCount();
+
+    if(my_home_model.rowCount() >= 1)
+    {
+        for(int i = 0 ; i < rowcount; i++)
+        {
+            home_ticket_num = my_home_model.data(my_home_model.index(i, 0)).toString();
+            home_u_name = my_home_model.data(my_home_model.index(i, 2)).toString();
+            home_flight_num_ = my_home_model.data(my_home_model.index(i, 3)).toString();
+            home_to_city = my_home_model.data(my_home_model.index(i, 4)).toString();
+            home_ar_city = my_home_model.data(my_home_model.index(i, 5)).toString();
+            home_to_date = my_home_model.data(my_home_model.index(i, 6)).toString();
+            home_to_time = my_home_model.data(my_home_model.index(i, 7)).toString();
+            home_flight_price = my_home_model.data(my_home_model.index(i, 8)).toString();
+
+            int table_row = ui->my_home_tableWidget->rowCount();
+            ui->my_home_tableWidget->insertRow(table_row);
+
+            ui->my_home_tableWidget->setItem(table_row, 0, new QTableWidgetItem(home_ticket_num));
+            ui->my_home_tableWidget->setItem(table_row, 1, new QTableWidgetItem(home_u_name));
+            ui->my_home_tableWidget->setItem(table_row, 2, new QTableWidgetItem(home_flight_num_));
+            ui->my_home_tableWidget->setItem(table_row, 3, new QTableWidgetItem(home_to_city));
+            ui->my_home_tableWidget->setItem(table_row, 4, new QTableWidgetItem(home_ar_city));
+            ui->my_home_tableWidget->setItem(table_row, 5, new QTableWidgetItem(home_to_date));
+            ui->my_home_tableWidget->setItem(table_row, 6, new QTableWidgetItem(home_to_time));
+            ui->my_home_tableWidget->setItem(table_row, 7, new QTableWidgetItem(home_flight_price));
+        }
+    }
+    else
+    {
+        QMessageBox::about(NULL, "提示", "未查询到您的相关机票信息!");
+    }
+}
+/*******************************************************************************************个人中心功能******************************************************************************/
 
