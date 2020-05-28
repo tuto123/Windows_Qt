@@ -10,7 +10,7 @@ Target Server Type    : MYSQL
 Target Server Version : 50556
 File Encoding         : 65001
 
-Date: 2020-05-24 18:03:02
+Date: 2020-05-28 11:05:52
 */
 
 SET FOREIGN_KEY_CHECKS=0;
@@ -37,13 +37,14 @@ INSERT INTO `aim_info` VALUES ('123', '123');
 DROP TABLE IF EXISTS `ele_ticket`;
 CREATE TABLE `ele_ticket` (
   `e_ticket_num` varchar(255) NOT NULL,
-  `e_name` varchar(255) DEFAULT NULL,
+  `e_order_num` varchar(255) DEFAULT NULL,
+  `e_ticket_u_name` varchar(255) DEFAULT NULL,
   `e_flight_num` varchar(255) DEFAULT NULL,
-  `e_flight_seat` varchar(255) DEFAULT NULL,
-  `e_flight_price` double(255,0) DEFAULT NULL,
-  `e_oil_price` double(255,0) DEFAULT NULL,
-  `e_other_price` double(255,0) DEFAULT NULL,
-  `e_count_price` double(255,0) DEFAULT NULL,
+  `e_filght_to_city` varchar(255) DEFAULT NULL,
+  `e_flight_ar_city` varchar(255) DEFAULT NULL,
+  `e_flight_date` varchar(255) DEFAULT NULL,
+  `e_flight_to_time` varchar(255) DEFAULT NULL,
+  `e_flight_price` varchar(255) DEFAULT '',
   PRIMARY KEY (`e_ticket_num`),
   KEY `电子客票_交易订单_航班号` (`e_flight_num`)
 ) ENGINE=InnoDB DEFAULT CHARSET=gb2312;
@@ -51,6 +52,10 @@ CREATE TABLE `ele_ticket` (
 -- ----------------------------
 -- Records of ele_ticket
 -- ----------------------------
+INSERT INTO `ele_ticket` VALUES ('GZ-BJ12320200527201049', '12320200527200519', 'tuto', 'GZ-BJ123', '广州', '北京', '2020-05-29', '16:11:52', '1300');
+INSERT INTO `ele_ticket` VALUES ('GZ-BJ12320200527201717', '12320200527200909', 'tuto', 'GZ-BJ123', '广州', '北京', '2020-05-29', '16:11:52', '1300');
+INSERT INTO `ele_ticket` VALUES ('GZ-BJ12320200527211706', '12320200527211700', 'tuto1', 'GZ-BJ123', '广州', '北京', '2020-05-29', '16:11:52', '1300');
+INSERT INTO `ele_ticket` VALUES ('GZ-SZ12320200527171911', '13302420200527171900', '李军', 'GZ-SZ123', '广州', '深圳', '2020-05-26', '09:11:58', '320');
 
 -- ----------------------------
 -- Table structure for flight_com_info
@@ -92,8 +97,7 @@ CREATE TABLE `flight_info` (
 INSERT INTO `flight_info` VALUES ('BJ-GZ123', '352', '2020-05-23', '2020-05-24', '09:11:49', '1331', '波音777', '福建', '北京', '广州');
 INSERT INTO `flight_info` VALUES ('GZ-BJ123', '253', '2020-05-29', '2020-05-30', '16:11:52', '1300', '波音747', '济南', '广州', '北京');
 INSERT INTO `flight_info` VALUES ('GZ-SH123', '654', '2020-05-29', '2020-05-29', '11:59:09', '1300', '波音747', '黄山', '广州', '上海');
-INSERT INTO `flight_info` VALUES ('GZ-SZ123', '120', '2020-05-26', '2020-05-26', '09:11:58', '320', '波音747', null, '广州', '深圳');
-INSERT INTO `flight_info` VALUES ('SH-GZ123', '720', '2020-05-26', '2020-05-27', '16:02:01', '1352', '波音777', null, '上海', '广州');
+INSERT INTO `flight_info` VALUES ('GZ-SZ123', '120', '2020-05-26', '2020-05-26', '09:11:58', '320', '波音747', '', '广州', '深圳');
 INSERT INTO `flight_info` VALUES ('SZ-GZ123', '132', '2020-05-28', '2020-05-29', '20:12:04', '325', '波音777', null, '深圳', '广州');
 
 -- ----------------------------
@@ -103,7 +107,7 @@ DROP TABLE IF EXISTS `order_info`;
 CREATE TABLE `order_info` (
   `order_num` varchar(255) NOT NULL,
   `order_flight_num` varchar(255) DEFAULT NULL,
-  `order_u_tel` varchar(11) NOT NULL,
+  `order_u_tel` varchar(255) NOT NULL,
   `order_u_name` varchar(255) DEFAULT NULL,
   `order_pay_state` varchar(255) NOT NULL,
   `order_flight_date` varchar(255) DEFAULT NULL,
@@ -122,11 +126,10 @@ CREATE TABLE `order_info` (
 -- ----------------------------
 -- Records of order_info
 -- ----------------------------
-INSERT INTO `order_info` VALUES ('12320200524170101', 'SH-GZ123', '123', 'tuto', '未支付', '2020-05-26', '16:02:01', '上海', '广州', '1352', '17:01:01', null);
-INSERT INTO `order_info` VALUES ('12320200524172710', 'SH-GZ123', '123', 'tuto', '未支付', '2020-05-26', '16:02:01', '上海', '广州', '1352', '17:27:10', null);
-INSERT INTO `order_info` VALUES ('12320200524173138', 'GZ-SZ123', '123', 'tuto', '未支付', '2020-05-26', '09:11:58', '广州', '深圳', '320', '17:31:38', null);
-INSERT INTO `order_info` VALUES ('12320200524180159', 'GZ-SZ123', '123', 'tuto', '未支付', '2020-05-26', '09:11:58', '广州', '深圳', '320', '18:01:59', null);
-INSERT INTO `order_info` VALUES ('12320200524180212', 'GZ-SZ123', '123', 'tuto', '未支付', '2020-05-26', '09:11:58', '广州', '深圳', '320', '18:02:12', null);
+INSERT INTO `order_info` VALUES ('12320200527200519', 'GZ-BJ123', '123', 'tuto', '已支付', '2020-05-29', '16:11:52', '广州', '北京', '1200', '20:05:19', '20:10:49');
+INSERT INTO `order_info` VALUES ('12320200527200909', 'GZ-BJ123', '123', 'tuto', '已支付', '2020-05-29', '16:11:52', '广州', '北京', '1300', '20:09:09', '20:17:17');
+INSERT INTO `order_info` VALUES ('12320200527211700', 'GZ-BJ123', '123', 'tuto1', '已支付', '2020-05-29', '16:11:52', '广州', '北京', '1300', '21:17:00', '21:17:06');
+INSERT INTO `order_info` VALUES ('12320200528100404', 'GZ-BJ123', '123', 'tuto1', '未支付', '2020-05-29', '16:11:52', '广州', '北京', '1300', '10:04:04', null);
 
 -- ----------------------------
 -- Table structure for ticket_info
@@ -156,7 +159,7 @@ DROP TABLE IF EXISTS `user_info`;
 CREATE TABLE `user_info` (
   `u_name` varchar(255) CHARACTER SET utf8 NOT NULL,
   `u_IDCard` varchar(255) NOT NULL,
-  `u_tel` varchar(11) NOT NULL,
+  `u_tel` varchar(255) NOT NULL,
   `u_pwd` varchar(255) NOT NULL,
   PRIMARY KEY (`u_tel`)
 ) ENGINE=InnoDB DEFAULT CHARSET=gb2312;
@@ -164,9 +167,9 @@ CREATE TABLE `user_info` (
 -- ----------------------------
 -- Records of user_info
 -- ----------------------------
-INSERT INTO `user_info` VALUES ('李富', '789', '1', '1');
 INSERT INTO `user_info` VALUES ('??', '8845456561', '110', '110');
 INSERT INTO `user_info` VALUES ('111', '111', '111', '111');
-INSERT INTO `user_info` VALUES ('tuto', '441524188832456518', '123', '123');
+INSERT INTO `user_info` VALUES ('tuto1', '441524188832456518', '123', '123');
 INSERT INTO `user_info` VALUES ('tuto123', '441545987899889', '1314', '1314');
+INSERT INTO `user_info` VALUES ('李军', '12345465487', '133024', '123');
 INSERT INTO `user_info` VALUES ('123', '123', '134', '123');
