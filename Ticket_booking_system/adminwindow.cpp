@@ -49,7 +49,7 @@ void AdminWindow::on_logout_pushButton_clicked()
     }
 }
 
-//初始化用户界面
+//初始化管理员界面
 void AdminWindow::initAdminwindow()
 {
     //order_cen_show();                                       //显示订单中心订单相关信息
