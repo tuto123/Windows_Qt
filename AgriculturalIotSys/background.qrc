@@ -23,5 +23,6 @@
         <file>rec/img/open.png</file>
         <file>rec/img/light_off.png</file>
         <file>rec/img/light_on.png</file>
+        <file>rec/img/soil.png</file>
     </qresource>
 </RCC>

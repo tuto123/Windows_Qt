@@ -50,7 +50,7 @@ private:
     void FindSerialPort();
     void PublishData(QString msgpay);
     void ParseRecData(QString recieve_str);
-    int CalculateItemNum(QString maskNum);
+    int  CalculateItemNum(QString maskNum);
 };
 
 #endif // SHOWDATA_H

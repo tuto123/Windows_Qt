@@ -16,12 +16,14 @@ SOURCES += main.cpp\
         mainwindow.cpp \
     showdata.cpp \
     lockscreen.cpp \
-    mqttclient.cpp
+    mqttclient.cpp \
+    tea.c
 
 HEADERS  += mainwindow.h \
     showdata.h \
     lockscreen.h \
-    mqttclient.h
+    mqttclient.h \
+    tea.h
 
 FORMS    += mainwindow.ui \
     showdata.ui \

@@ -1,6 +1,11 @@
 #include "showdata.h"
 #include "ui_showdata.h"
 
+extern  "C"
+{
+    #include "tea.h"
+}
+
 #include <QtSerialPort/QSerialPort>
 #include <QtSerialPort/QSerialPortInfo>
 #include <QDebug>
@@ -56,6 +61,7 @@
 #define RECV_TEST_DATA3   "2_1_22_70_60_33"
 #define TERNIMAL_TOPIC  "/Server/Terminal/terminal_info"
 #define ENV_TOPIC       "/Embedded/Terminal/device_env"
+#define ENCRYPTKEY         "lifu123@outlook.com"
 /*--------------------------Local Define--------------------------*/
 
 /*--------------------------Local Data--------------------------*/
@@ -165,7 +171,7 @@ void ShowData::serialPortRead()
 {
     QString getData;
     getData = QString::fromLocal8Bit(serial.readAll());
-    qDebug() << getData;
+    qDebug() << "getData: " + getData;
     ParseRecData(getData);
 }
 
@@ -215,7 +221,40 @@ void ShowData::on_dial_FanSpeed_valueChanged(int value)
     fanjson.insert("FanSpeed", QString::number(value).toInt());
     fanSpeed = QString(QJsonDocument(fanjson).toJson());
     fanSpeed += '\r';
-    qDebug() << fanSpeed;
+
+    QByteArray encyptFanSpeed;
+    QByteArray decryptFanSpeed;
+    uint16_t encryptSize;
+    uint16_t decryptSize;
+    uint16_t fanSpeedSize = fanSpeed.size();
+    uint16_t encryptKeySize = QString(ENCRYPTKEY).size();
+    uint8_t srcFanSpeed[fanSpeedSize];
+    uint8_t encryptKey[encryptKeySize];
+
+    for(int i = 0; i < fanSpeedSize; i++)
+    {
+        srcFanSpeed[i] = fanSpeed.toLatin1()[i];
+    }
+    for(int i = 0; i < encryptKeySize; i++)
+    {
+        encryptKey[i] = QString(ENCRYPTKEY).toLatin1()[i];
+    }
+
+    encryptSize = encrypt(srcFanSpeed, fanSpeedSize, encryptKey);
+    for(int i = 0; i < encryptSize; i++)
+    {
+        encyptFanSpeed[i] = srcFanSpeed[i];
+    }
+    qDebug() << "加密后数据:" + QString(encyptFanSpeed);
+
+#if 0
+    decryptSize = decrypt(srcFanSpeed, encryptSize, encryptKey);
+    for(int i = 0; i < decryptSize; i++)
+    {
+        decryptFanSpeed[i] = srcLightStatus[i];
+    }
+    qDebug() << "解密后数据:" + QString(decryptFanSpeed);
+#endif
     ui->lcdNumber_FanSpeed->display(value);
     serial.write(fanSpeed.toLocal8Bit());
 }
@@ -283,7 +322,40 @@ void ShowData::on_light_checkBox_stateChanged(int arg1)
         lightJson.insert("LightStatus", QString::number(1).toInt());
         lightStatus = QString(QJsonDocument(lightJson).toJson());
         lightStatus += '\r';
-        qDebug() << lightStatus;
+
+        QByteArray encyptLightStatus;
+        QByteArray decryptLightStatus;
+        uint16_t encryptSize;
+        uint16_t decryptSize;
+        uint16_t lightStatusSize = lightStatus.size();
+        uint16_t encryptKeySize = QString(ENCRYPTKEY).size();
+        uint8_t srcLightStatus[lightStatusSize];
+        uint8_t encryptKey[encryptKeySize];
+
+        for(int i = 0; i < lightStatusSize; i++)
+        {
+            srcLightStatus[i] = lightStatus.toLatin1()[i];
+        }
+        for(int i = 0; i < encryptKeySize; i++)
+        {
+            encryptKey[i] = QString(ENCRYPTKEY).toLatin1()[i];
+        }
+
+        encryptSize = encrypt(srcLightStatus, lightStatusSize, encryptKey);
+        for(int i = 0; i < encryptSize; i++)
+        {
+            encyptLightStatus[i] = srcLightStatus[i];
+        }
+        qDebug() << "加密后数据:" + QString(encyptLightStatus);
+
+#if 0
+        decryptSize = decrypt(srcLightStatus, encryptSize, encryptKey);
+        for(int i = 0; i < decryptSize; i++)
+        {
+            decryptLightStatus[i] = srcLightStatus[i];
+        }
+        qDebug() << "解密后数据:" + QString(decryptLightStatus);
+#endif
         serial.write(lightStatus.toLocal8Bit());
     }
     else
@@ -294,7 +366,40 @@ void ShowData::on_light_checkBox_stateChanged(int arg1)
         lightJson.insert("LightStatus", QString::number(0).toInt());
         lightStatus = QString(QJsonDocument(lightJson).toJson());
         lightStatus += '\r';
-        qDebug() << lightStatus;
+
+        QByteArray encyptlightStatus;
+        QByteArray decryptlightStatus;
+        uint16_t encryptSize;
+        uint16_t decryptSize;
+        uint16_t lightStatusSize = lightStatus.size();
+        uint16_t encryptKeySize = QString(ENCRYPTKEY).size();
+        uint8_t srcLightStatus[lightStatusSize];
+        uint8_t encryptKey[encryptKeySize];
+
+        for(int i = 0; i < lightStatusSize; i++)
+        {
+            srcLightStatus[i] = lightStatus.toLatin1()[i];
+        }
+        for(int i = 0; i < encryptKeySize; i++)
+        {
+            encryptKey[i] = QString(ENCRYPTKEY).toLatin1()[i];
+        }
+
+        encryptSize = encrypt(srcLightStatus, lightStatusSize, encryptKey);
+        for(int i = 0; i < encryptSize; i++)
+        {
+            encyptlightStatus[i] = srcLightStatus[i];
+        }
+        qDebug() << "加密后数据:" + QString(encyptlightStatus);
+
+#if 0
+        decryptSize = decrypt(srcLightStatus, encryptSize, encryptKey);
+        for(int i = 0; i < decryptSize; i++)
+        {
+            decryptlightStatus[i] = srcLightStatus[i];
+        }
+        qDebug() << "解密后数据:" + QString(decryptlightStatus);
+#endif
         serial.write(lightStatus.toLocal8Bit());
     }
 }
@@ -371,14 +476,14 @@ void ShowData::ParseRecData(QString recieve_str)
     terminalId = headerDataList[1];
     maskNum = headerDataList[2];
 
-    qDebug() << terminalId;
-    qDebug() << deviceId;
-    qDebug() << maskNum;
+    qDebug() << "terminalId: " + terminalId;
+    qDebug() << "deviceId: " + deviceId;
+    qDebug() << "maskNum: " + maskNum;
 
     int itemNum = 0;
     int maxPosition;
     maxPosition = CalculateItemNum(maskNum);
-    qDebug() << "maxPosition:" + QString::number(maxPosition);
+    qDebug() << "maxPosition: " + QString::number(maxPosition);
     for(i = 0; i < maxPosition; i++)
     {
         itemDataList.append(QString::number(0));
