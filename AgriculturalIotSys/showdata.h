@@ -4,6 +4,8 @@
 #include <QWidget>
 #include <QPainter>
 
+#include <qmqtt.h>
+
 namespace Ui {
 class ShowData;
 }
@@ -33,9 +35,10 @@ private slots:
 
     void on_pushButton_nextPage_clicked();
 
-    void on_light_checkBox_stateChanged(int arg1);
-
     void on_pushButton_ReceiveData_clicked();
+
+    void on_light_checkBox_clicked();
+
 
 private:
     Ui::ShowData *ui;
@@ -51,6 +54,7 @@ private:
     void PublishData(QString msgpay);
     void ParseRecData(QString recieve_str);
     int  CalculateItemNum(QString maskNum);
+    void onReceived(const QMQTT::Message &message);
 };
 
 #endif // SHOWDATA_H

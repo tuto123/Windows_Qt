@@ -86,7 +86,7 @@
     </rect>
    </property>
    <property name="currentIndex">
-    <number>0</number>
+    <number>1</number>
    </property>
    <widget class="QWidget" name="page_device1">
     <widget class="QLabel" name="light_intensity_icon_label">
@@ -139,7 +139,7 @@
     <widget class="QLabel" name="temperture_text_label">
      <property name="geometry">
       <rect>
-       <x>70</x>
+       <x>80</x>
        <y>130</y>
        <width>70</width>
        <height>40</height>
@@ -160,7 +160,7 @@
     <widget class="QLabel" name="temperture_icon_label">
      <property name="geometry">
       <rect>
-       <x>50</x>
+       <x>60</x>
        <y>60</y>
        <width>90</width>
        <height>70</height>

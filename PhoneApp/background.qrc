@@ -1,0 +1,30 @@
+<RCC>
+    <qresource prefix="/">
+        <file>rec/img/show_data_background.png</file>
+        <file>rec/img/home_background.png</file>
+        <file>rec/qss/black.css</file>
+        <file>rec/qss/blue.css</file>
+        <file>rec/qss/brown.css</file>
+        <file>rec/qss/darkgray.css</file>
+        <file>rec/qss/dev.css</file>
+        <file>rec/qss/gray.css</file>
+        <file>rec/qss/lightgray.css</file>
+        <file>rec/qss/silvery.css</file>
+        <file>rec/img/fan_on.png</file>
+        <file>rec/img/gas.png</file>
+        <file>rec/img/home.png</file>
+        <file>rec/img/humidity.png</file>
+        <file>rec/img/light.png</file>
+        <file>rec/img/temperture_weather.png</file>
+        <file>rec/img/temperture.png</file>
+        <file>rec/img/next_page.png</file>
+        <file>rec/img/previous_page.png</file>
+        <file>rec/img/close.png</file>
+        <file>rec/img/open.png</file>
+        <file>rec/img/light_off.png</file>
+        <file>rec/img/light_on.png</file>
+        <file>rec/img/soil.png</file>
+        <file>rec/qss/DroidSansFallback.ttf</file>
+        <file>rec/img/phone_background.png</file>
+    </qresource>
+</RCC>

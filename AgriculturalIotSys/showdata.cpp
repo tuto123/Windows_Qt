@@ -52,16 +52,18 @@ extern  "C"
 #define FANSPEED_ITEMID         5
 #define LIGHTSTATUS_ITEMID      6
 
-#define SPLITCHAR       "_"
-#define HEADERSIZE      3
+#define SPLITCHAR               "_"
+#define HEADERSIZE              3
 
-#define SEND_TEST_DATA   "1_1_63_50_30_60_70_80_1"
-#define RECV_TEST_DATA1   "1_1_63_50_30_60_70_80_1"
-#define RECV_TEST_DATA2   "1_1_45_30_60_80_1"
-#define RECV_TEST_DATA3   "2_1_22_70_60_33"
-#define TERNIMAL_TOPIC  "/Server/Terminal/terminal_info"
-#define ENV_TOPIC       "/Embedded/Terminal/device_env"
-#define ENCRYPTKEY         "lifu123@outlook.com"
+#define SEND_TEST_DATA      "1_1_63_50_30_60_70_80_1"
+#define RECV_TEST_DATA1     "1_1_63_50_30_60_70_80_1"
+#define RECV_TEST_DATA2     "1_1_45_30_60_80_1"
+#define RECV_TEST_DATA3     "2_1_22_70_60_33"
+#define P2T_TOPIC_ENV       "/Phone/Terminal/device_env"
+#define P2T_TOPIC_CTRL      "/Phone/Terminal/device_ctrl"
+#define TERNIMAL_TOPIC      "/Server/Terminal/terminal_info"
+#define ENV_TOPIC           "/Embedded/Terminal/device_env"
+#define ENCRYPTKEY          "lifu123@outlook.com"
 /*--------------------------Local Define--------------------------*/
 
 /*--------------------------Local Data--------------------------*/
@@ -141,6 +143,7 @@ bool ShowData::ConnectMqtt()
 
     ret = mqttt_client.isConnectedToHost();
     mqttt_client.subscribe(QString(ENV_TOPIC), 0);
+    mqttt_client.subscribe(QString(P2T_TOPIC_CTRL), 0);
     if(ret == false)
     {
         QMessageBox::about(NULL, "提示", "服务器未连接!");
@@ -148,6 +151,7 @@ bool ShowData::ConnectMqtt()
     else
     {
         QMessageBox::about(NULL, "提示", "服务器连接成功!");
+        QObject::connect(&mqttt_client,&QMQTT::Client::received, this, &ShowData::onReceived);
     }
     return ret;
 }
@@ -171,8 +175,18 @@ void ShowData::serialPortRead()
 {
     QString getData;
     getData = QString::fromLocal8Bit(serial.readAll());
-    qDebug() << "getData: " + getData;
-    ParseRecData(getData);
+
+    if(getData.contains(QString(SPLITCHAR)))
+    {
+        qDebug() << "getData: " + getData;
+        ParseRecData(getData);
+        PublishData(getData);
+    }
+    else
+    {
+        qDebug() << "printf: " + getData;
+    }
+
 }
 
 void ShowData::InitSerialPort()
@@ -196,7 +210,7 @@ void ShowData::FindSerialPort()
     {
         QMessageBox::about(NULL, "提示", "未接入无线模块!");
     }
-    serialportname = serialportnamelist.at(1);
+    serialportname = serialportnamelist.at(4);
     qDebug() << QString(serialportname);
     qDebug() << serialportnamelist;
 }
@@ -221,7 +235,7 @@ void ShowData::on_dial_FanSpeed_valueChanged(int value)
     fanjson.insert("FanSpeed", QString::number(value).toInt());
     fanSpeed = QString(QJsonDocument(fanjson).toJson());
     fanSpeed += '\r';
-
+#if 0
     QByteArray encyptFanSpeed;
     QByteArray decryptFanSpeed;
     uint16_t encryptSize;
@@ -245,18 +259,31 @@ void ShowData::on_dial_FanSpeed_valueChanged(int value)
     {
         encyptFanSpeed[i] = srcFanSpeed[i];
     }
+    QString(encyptFanSpeed).append("\r").toLocal8Bit();
     qDebug() << "加密后数据:" + QString(encyptFanSpeed);
 
 #if 0
     decryptSize = decrypt(srcFanSpeed, encryptSize, encryptKey);
     for(int i = 0; i < decryptSize; i++)
     {
-        decryptFanSpeed[i] = srcLightStatus[i];
+        decryptFanSpeed[i] = srcFanSpeed[i];
     }
     qDebug() << "解密后数据:" + QString(decryptFanSpeed);
 #endif
+#endif
     ui->lcdNumber_FanSpeed->display(value);
-    serial.write(fanSpeed.toLocal8Bit());
+    serial.write(fanSpeed.toLatin1());
+
+}
+
+void ShowData::onReceived(const QMQTT::Message &message)
+{
+    if(message.topic() == QString(P2T_TOPIC_CTRL))
+    {
+        QString recieve_str = QString::fromUtf8(message.payload());
+        qDebug() << "手机的控制消息:" + recieve_str;
+        serial.write(recieve_str.toLatin1());
+    }
 }
 
 void ShowData::on_pushButton_ConnectServer_clicked()
@@ -309,20 +336,21 @@ void ShowData::on_pushButton_ConnectServer_clicked()
 
 }
 
-void ShowData::on_light_checkBox_stateChanged(int arg1)
+void ShowData::on_light_checkBox_clicked()
 {
     QJsonObject lightJson;
     QString lightStatus;
 
-    if(arg1)
+    if(ui->light_checkBox->checkState() == Qt::Checked)
     {
+        qDebug() << "ui->light_checkBox->checkState() == Qt::Checked";
         light_on.load(":/rec/img/light_on.png");
         ui->device2_light_icon_label->setPixmap(QPixmap::fromImage(light_on));
 
-        lightJson.insert("LightStatus", QString::number(1).toInt());
+        lightJson.insert("LightStat", QString::number(1).toInt());
         lightStatus = QString(QJsonDocument(lightJson).toJson());
         lightStatus += '\r';
-
+#if 0
         QByteArray encyptLightStatus;
         QByteArray decryptLightStatus;
         uint16_t encryptSize;
@@ -356,19 +384,22 @@ void ShowData::on_light_checkBox_stateChanged(int arg1)
         }
         qDebug() << "解密后数据:" + QString(decryptLightStatus);
 #endif
-        serial.write(lightStatus.toLocal8Bit());
+#endif
+        qDebug() << lightStatus;
+        serial.write(lightStatus.toLatin1());
     }
-    else
+    if (ui->light_checkBox->checkState() == Qt::Unchecked)
     {
+        qDebug() << "ui->light_checkBox->checkState() == Qt::Unchecked";
         light_off.load(":/rec/img/light_off.png");
         ui->device2_light_icon_label->setPixmap(QPixmap::fromImage(light_off));
 
-        lightJson.insert("LightStatus", QString::number(0).toInt());
+        lightJson.insert("LightStat", QString::number(0).toInt());
         lightStatus = QString(QJsonDocument(lightJson).toJson());
         lightStatus += '\r';
-
-        QByteArray encyptlightStatus;
-        QByteArray decryptlightStatus;
+#if 0
+        QByteArray encyptLightStatus;
+        QByteArray decryptLightStatus;
         uint16_t encryptSize;
         uint16_t decryptSize;
         uint16_t lightStatusSize = lightStatus.size();
@@ -388,21 +419,24 @@ void ShowData::on_light_checkBox_stateChanged(int arg1)
         encryptSize = encrypt(srcLightStatus, lightStatusSize, encryptKey);
         for(int i = 0; i < encryptSize; i++)
         {
-            encyptlightStatus[i] = srcLightStatus[i];
+            encyptLightStatus[i] = srcLightStatus[i];
         }
-        qDebug() << "加密后数据:" + QString(encyptlightStatus);
+        qDebug() << "加密后数据:" + QString(encyptLightStatus);
 
 #if 0
         decryptSize = decrypt(srcLightStatus, encryptSize, encryptKey);
         for(int i = 0; i < decryptSize; i++)
         {
-            decryptlightStatus[i] = srcLightStatus[i];
+            decryptLightStatus[i] = srcLightStatus[i];
         }
-        qDebug() << "解密后数据:" + QString(decryptlightStatus);
+        qDebug() << "解密后数据:" + QString(decryptLightStatus);
 #endif
-        serial.write(lightStatus.toLocal8Bit());
+#endif
+        qDebug() << lightStatus;
+        serial.write(lightStatus.toLatin1());
     }
 }
+
 void ShowData::on_pushButton_UpdateData_clicked()
 {
     QMQTT::Message msg;
@@ -545,6 +579,25 @@ void ShowData::ParseRecData(QString recieve_str)
         {
             light_off.load(":/rec/img/light_off.png");
             ui->device1_light_icon_label->setPixmap(QPixmap::fromImage(light_off));
+        }
+    }
+    if(itemIdList.contains(QString::number(LIGHTSTATUS_ITEMID)))
+    {
+        if(itemDataList[LIGHTSTATUS_ITEMID].toInt() == 1 && (ui->light_checkBox->checkState() == Qt::Unchecked))
+        {
+            light_on.load(":/rec/img/light_on.png");
+            ui->device2_light_icon_label->setPixmap(QPixmap::fromImage(light_on));
+
+            ui->light_checkBox->setCheckState(Qt::Checked);
+
+
+        }
+        else if(itemDataList[LIGHTSTATUS_ITEMID].toInt() == 0 && (ui->light_checkBox->checkState() == Qt::Checked))
+        {
+            light_off.load(":/rec/img/light_off.png");
+            ui->device2_light_icon_label->setPixmap(QPixmap::fromImage(light_off));
+
+            ui->light_checkBox->setCheckState(Qt::Unchecked);
         }
     }
 

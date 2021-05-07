@@ -5,7 +5,7 @@
 //#define SERVERADDR  "192.168.222.128"
 #define SERVERADDR  "192.168.0.182"
 #define PORT        "1883"
-#define CLIENTID    "terminal1"
+#define CLIENTID    "pc_server"
 #define USERTNAME   "allen"
 #define PASSWORD    "123"
 
